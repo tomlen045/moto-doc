@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>大排诊脉 MotoDoc · 大排量摩托故障问诊</title>
+<style>
+:root{--bg:#0a0f1a;--card:#111827;--line:#1f2a3d;--tx:#e5edf7;--dim:#8ba0b8;--acc:#ff5a5a;--ok:#2dd4a7;--warn:#ffb02e}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--tx);font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+ background-image:linear-gradient(rgba(255,90,90,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,90,90,.03) 1px,transparent 1px);
+ background-size:36px 36px;min-height:100vh;padding:32px 16px}
+.wrap{max-width:920px;margin:0 auto}
+.badge{display:inline-block;border:1px solid var(--acc);color:var(--acc);font-size:12px;padding:3px 10px;border-radius:99px;letter-spacing:2px}
+h1{font-size:34px;margin:14px 0 6px}
+h1 .glow{color:var(--acc);text-shadow:0 0 18px rgba(255,90,90,.5)}
+.sub{color:var(--dim);font-size:15px;line-height:1.7}
+.stats{display:flex;gap:12px;margin:22px 0}
+.stat{flex:1;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.stat b{display:block;font-size:26px;color:var(--acc);text-shadow:0 0 12px rgba(255,90,90,.35)}
+.stat span{font-size:12px;color:var(--dim)}
+.sec{margin-top:26px}
+.sec h2{font-size:15px;color:var(--dim);letter-spacing:3px;margin-bottom:12px}
+.row{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:99px;padding:8px 16px;font-size:13px;cursor:pointer;color:var(--dim)}
+.chip.on{border-color:var(--acc);color:var(--acc)}
+.chip:hover{border-color:var(--acc)}
+textarea{width:100%;min-height:110px;background:var(--card);border:1px solid var(--line);color:var(--tx);
+ border-radius:12px;padding:14px;font-size:14px;line-height:1.7;resize:vertical;margin-top:12px}
+textarea:focus{outline:none;border-color:var(--acc)}
+input.num{background:var(--card);border:1px solid var(--line);color:var(--tx);border-radius:8px;padding:8px 12px;width:120px;font-size:14px}
+.lbl{color:var(--dim);font-size:13px}
+.gen{margin-top:22px;width:100%;padding:16px;font-size:17px;font-weight:700;letter-spacing:4px;
+ background:linear-gradient(135deg,#ff5a5a,#d43a3a);color:#fff;border:none;border-radius:14px;cursor:pointer}
+#out{margin-top:26px;display:none}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:14px}
+.panel h3{font-size:14px;color:var(--acc);letter-spacing:2px;margin-bottom:12px}
+.bar{margin:10px 0}
+.bar .t{display:flex;justify-content:space-between;font-size:14px;margin-bottom:5px}
+.bar .t b{font-weight:600}
+.bar .track{height:9px;background:var(--line);border-radius:99px;overflow:hidden}
+.bar .fill{height:100%;background:linear-gradient(90deg,#ffb02e,#ff5a5a);border-radius:99px}
+.diy{font-size:12px;padding:2px 8px;border-radius:99px;border:1px solid var(--line)}
+.diy0{color:var(--ok);border-color:var(--ok)}
+.diy1{color:var(--warn);border-color:var(--warn)}
+.diy2{color:var(--acc);border-color:var(--acc)}
+.parts{font-size:12.5px;color:var(--dim);margin-top:4px;line-height:1.7}
+.note{font-size:12.5px;color:var(--dim);margin-top:4px;line-height:1.7}
+.q{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line)}
+.q:last-child{border:none}
+.q p{flex:1;font-size:13.5px;line-height:1.7}
+.q button{flex-shrink:0;background:none;border:1px solid var(--acc);color:var(--acc);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer}
+.dl{display:inline-block;margin-top:14px;color:var(--acc);border:1px solid var(--acc);border-radius:10px;padding:8px 18px;text-decoration:none;font-size:14px}
+.tip{font-size:12.5px;color:var(--dim);line-height:1.8;border-top:1px dashed var(--line);padding-top:10px;margin-top:10px}
+.foot{margin-top:30px;color:var(--dim);font-size:12px;text-align:center;line-height:1.8}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="badge">大排诊脉 MOTODOC</span>
+  <h1>大排量摩托<span class="glow">故障问诊</span></h1>
+  <p class="sub">用大白话描述症状 → 得到概率排序的病因清单：哪个能自己动手、哪个千万别拆、配件什么价、带车去修理店怎么说。<br>病因规则来自机械通用知识 + 车型社区高频问题（如 450SR 链条松弛为海外车主实测反馈），并生成「问 AI 深度排查」的问题清单。</p>
+  <div class="stats">
+    <div class="stat"><b id="st-rule">17</b><span>症状规则组</span></div>
+    <div class="stat"><b id="st-cause">0</b><span>匹配病因数</span></div>
+    <div class="stat"><b id="st-diy">0</b><span>可 DIY 项</span></div>
+  </div>
+
+  <div class="sec"><h2>① 座驾</h2><div class="row" id="bikes"></div></div>
+  <div class="sec"><h2>② 症状描述（大白话即可）</h2>
+    <textarea id="sym" placeholder="例：冷启动打不着，电瓶是新换的；热车跑高速龙头发抖，怠速还不稳…"></textarea>
+    <div class="row"><span class="lbl">当前里程 km</span><input class="num" id="km" type="number" value="12000" min="0"></div>
+  </div>
+
+  <button class="gen" onclick="go()">开始问诊</button>
+
+  <div id="out"></div>
+  <div class="foot">大排诊脉 MotoDoc · 病因为概率判断非确诊 · 安全件（刹车/轮胎/减震/ABS）一律以实车检修为准</div>
+</div>
+<script>
+let META=null,bike=null;
+fetch('/api/meta').then(r=>r.json()).then(m=>{META=m;render();});
+function render(){
+  const box=document.getElementById('bikes');let i=0;
+  for(const k in META.bikes){const b=META.bikes[k];
+    const c=document.createElement('div');c.className='chip'+(i==0?' on':'');if(i==0)bike=k;
+    c.textContent=b.name;c.title=b.note;
+    c.onclick=()=>{bike=k;[...box.children].forEach(x=>x.classList.remove('on'));c.classList.add('on');};
+    box.appendChild(c);i++;}
+  document.getElementById('st-rule').textContent='17';
+}
+async function go(){
+  const btn=document.querySelector('.gen');btn.textContent='问诊中…';btn.disabled=true;
+  try{
+    const res=await fetch('/api/diagnose',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({bike:bike,symptoms:document.getElementById('sym').value,
+        mileage:parseInt(document.getElementById('km').value||'0')})});
+    const data=await res.json();
+    if(!data.ok){alert('失败：'+data.error);return;}
+    draw(data);
+  }catch(e){alert('请求失败：'+e);}finally{btn.textContent='开始问诊';btn.disabled=false;}
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function draw(d){
+  const r=d.result;
+  document.getElementById('st-cause').textContent=r.causes.length;
+  document.getElementById('st-diy').textContent=r.causes.filter(c=>c.diy===0).length;
+  let h='';
+  h+='<div class="panel"><h3>🩺 车型提示</h3><p style="font-size:13.5px;line-height:1.8">'+esc(r.note)+'</p>'
+   +'<a class="dl" href="'+d.download+'" download>⬇ 下载问诊单 .md</a></div>';
+  if(r.no_match){
+    h+='<div class="panel"><h3>🤔 暂未匹配到规则</h3><p style="font-size:13.5px;line-height:1.8">换个说法描述症状（什么时候发生/什么声音/什么温度），或直接用下面的问题去问 AI。</p></div>';
+  }else{
+    h+='<div class="panel"><h3>📊 病因概率排序</h3>';
+    r.causes.forEach(c=>{
+      h+='<div class="bar"><div class="t"><b>'+esc(c.name)+'</b><span class="diy diy'+c.diy+'">'+c.diy_label+'</span></div>'
+       +'<div class="track"><div class="fill" style="width:'+c.prob+'%"></div></div>'
+       +'<div class="parts">配件参考：'+c.parts.map(p=>esc(p[0])+' ¥'+esc(p[1])).join(' · ')+'</div>'
+       +'<div class="note">'+esc(c.note)+'</div></div>';
+    });
+    h+='</div>';
+  }
+  h+='<div class="panel"><h3>🤖 问 AI 的深度排查清单（复制即用）</h3>';
+  r.ai_questions.forEach((q,i)=>{h+='<div class="q"><p>'+(i+1)+'. '+esc(q)+'</p><button onclick="copyq(this)">复制</button></div>';});
+  h+='<div class="tip">⚠ 判断规则：先把便宜的排查做完（胎压/电瓶/空滤/火花塞），再进修理厂；任何影响制动与转向的症状（抖动/ABS灯/前减漏油）当天就修，别过夜。</div>';
+  h+='</div>';
+  const out=document.getElementById('out');out.innerHTML=h;out.style.display='block';
+  out.scrollIntoView({behavior:'smooth'});
+}
+function copyq(btn){const p=btn.parentElement.querySelector('p').textContent.replace(/^\d+\.\s/,'');
+  navigator.clipboard.writeText(p).then(()=>{btn.textContent='已复制';setTimeout(()=>btn.textContent='复制',1500);});}
+</script>
+</body>
+</html>
